@@ -13,11 +13,16 @@ class Course extends Model
 
     public function sets()
     {
-        return $this->hasOne(Set::class);
+        return $this->hasMany(Set::class);
     }
 
     public function enrollments()
     {
         return $this->hasMany(Enrollment::class);
+    }
+
+    public function getRouteKeyName()
+    {
+        return 'slug';
     }
 }

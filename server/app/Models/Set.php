@@ -13,7 +13,7 @@ class Set extends Model
 
     public function lessons()
     {
-        return $this->hasOne(Lesson::class);
+        return $this->hasMany(Lesson::class);
     }
 
     public function course()

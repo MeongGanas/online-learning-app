@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Administrator;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -18,17 +19,20 @@ class AuthController extends Controller
 
         $user = User::where('username', $request->username)->first();
 
+        if (!$user) {
+            $user = Administrator::where('username', $request->username)->first();
+        }
+
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return [
+            return response()->json([
                 "status" => "authentication_failed",
                 "message" => "The username or password you entered is incorrect"
-            ];
+            ], 400);
         }
 
         $user["token"] = $user->createToken($user->username)->plainTextToken;
-        $user["role"] = "user";
 
-        return ["status" => 200, "data" => $user];
+        return response()->json(["status" => "success", "message" => "Login successful", "data" => $user], 201);
     }
 
     public function register(Request $request)
@@ -36,7 +40,7 @@ class AuthController extends Controller
         try {
             $request->validate([
                 'full_name' => 'required|string',
-                'username' => 'required|string|min:3|max:255|regex:/^[a-zA-Z0-9._]+$/|unique:users',
+                'username' => 'required|string|min:3|max:255|regex:/^[a-zA-Z0-9._]+$/|unique:users|unique:administrators',
                 'password' => 'required|string|min:6|max:255'
             ]);
 
@@ -47,19 +51,18 @@ class AuthController extends Controller
             ]);
 
             $user["token"] = $user->createToken($user->username)->plainTextToken;
-            $user["role"] = "user";
 
-            return [
+            return response()->json([
                 "status" => "success",
                 "message" => "User registration successful",
                 "data" => $user
-            ];
+            ], 201);
         } catch (ValidationException $error) {
-            return [
+            return response()->json([
                 "status" => "error",
                 "message" => $error->getMessage(),
                 "errors" => $error->errors()
-            ];
+            ], 400);
         }
     }
 
@@ -68,15 +71,15 @@ class AuthController extends Controller
         try {
             $request->user()->tokens()->delete();
 
-            return [
+            return response()->json([
                 "status" => "success",
                 "message" => "Logout successful"
-            ];
+            ], 201);
         } catch (\Exception $e) {
-            return [
+            return response()->json([
                 "status" => "invalid_token",
                 "message" => "Invalid or expired token"
-            ];
+            ], 400);
         }
     }
 }

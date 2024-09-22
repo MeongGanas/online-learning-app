@@ -4,31 +4,40 @@ namespace App\Http\Controllers;
 
 use App\Models\Set;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class SetController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, $course_id)
     {
-        //
+        try {
+            $request->validate([
+                'name' => 'required|string|max:255'
+            ]);
+
+            $lastOrder = Set::where('course_id', $course_id)->max('order');
+
+            $sets = Set::create([
+                'name' => $request->name,
+                'course_id' => $course_id,
+                'order' => $lastOrder + 1
+            ]);
+
+            return response()->json([
+                "status" => "success",
+                "message" => "Sets successfully added",
+                "data" => $sets
+            ], 201);
+        } catch (ValidationException $error) {
+            return response()->json([
+                "status" => "error",
+                "message" => $error->getMessage(),
+                "errors" => $error->errors()
+            ], 400);
+        }
     }
 
     /**
