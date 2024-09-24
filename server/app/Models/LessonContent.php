@@ -18,6 +18,6 @@ class LessonContent extends Model
 
     public function options()
     {
-        return $this->hasMany(Option::class);
+        return $this->hasOne(Option::class);
     }
 }

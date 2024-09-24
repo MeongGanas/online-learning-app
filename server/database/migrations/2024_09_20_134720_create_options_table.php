@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('options', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('lesson_content_id');
+            $table->foreignId('lesson_content_id')->constrained()->onDelete('cascade');
             $table->text('option_text');
             $table->tinyInteger('is_correct');
             $table->timestamps();
