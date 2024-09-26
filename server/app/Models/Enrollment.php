@@ -11,6 +11,8 @@ class Enrollment extends Model
 
     protected $guarded = ['id'];
 
+    protected $with = ['course'];
+
     public function course()
     {
         return $this->belongsTo(Course::class);

@@ -11,6 +11,8 @@ class CompletedLesson extends Model
 
     protected $guarded = ['id'];
 
+    protected $with = ['lesson'];
+
     public function user()
     {
         return $this->belongsTo(User::class);

@@ -22,12 +22,12 @@ class LessonController extends Controller
                 'name' => 'required|string|max:255',
                 'set_id' => 'required|integer|exists:sets,id',
                 'contents' => 'required|array',
-                'contents.type' => ['required', Rule::in(['quiz', 'learn'])],
-                'contents.content' => 'required|string',
+                'contents.*.type' => ['required', Rule::in(['quiz', 'learn'])],
+                'contents.*.content' => 'required|string',
 
-                'contents.options' => ['required_if:contents.type,learn', 'array'],
-                'contents.options.option_text' => ['required_if:contents.type,learn', 'string'],
-                'contents.options.is_correct' => ['required_if:contents.type,learn', 'boolean'],
+                'contents.*.options' => ['required_if:contents.type,learn', 'array'],
+                'contents.*.options.option_text' => ['required_if:contents.type,learn', 'string'],
+                'contents.*.options.is_correct' => ['required_if:contents.type,learn', 'boolean'],
             ]);
 
             $lessonOrder = Lesson::where("set_id", $validatedData["set_id"])->max("order");
@@ -40,19 +40,22 @@ class LessonController extends Controller
 
             $lessonContentOrder = LessonContent::where("lesson_id", $lesson->id)->max("order");
 
-            $lessonContent = LessonContent::create([
-                "lesson_id" => $lesson->id,
-                "type" => $validatedData["contents"]["type"],
-                "content" => $validatedData["contents"]["content"],
-                "order" => $lessonContentOrder + 1
-            ]);
+            foreach ($validatedData["contents"] as $content) {
 
-            if ($validatedData["contents"]["type"] === "quiz") {
-                Option::create([
-                    "lesson_content_id" => $lessonContent->id,
-                    "option_text" => $validatedData["contents"]["options"]["option_text"],
-                    "is_correct" => $validatedData["contents"]["options"]["is_correct"],
+                $lessonContent = LessonContent::create([
+                    "lesson_id" => $lesson->id,
+                    "type" => $content["type"],
+                    "content" => $content["content"],
+                    "order" => $lessonContentOrder + 1
                 ]);
+
+                if ($content["type"] === "quiz") {
+                    Option::create([
+                        "lesson_content_id" => $lessonContent->id,
+                        "option_text" => $content["options"]["option_text"],
+                        "is_correct" => $content["options"]["is_correct"],
+                    ]);
+                }
             }
 
             return response()->json([
@@ -65,7 +68,7 @@ class LessonController extends Controller
                 "status" => "error",
                 "message" => $error->getMessage(),
                 "errors" => $error->errors()
-            ]);
+            ], 400);
         }
     }
 

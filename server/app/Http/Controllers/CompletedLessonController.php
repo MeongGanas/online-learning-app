@@ -3,63 +3,31 @@
 namespace App\Http\Controllers;
 
 use App\Models\CompletedLesson;
+use App\Models\Lesson;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 
 class CompletedLessonController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function track(Request $request, $lesson_id)
     {
-        //
-    }
+        try {
+            Lesson::where('id', $lesson_id)->firstOrFail();
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
+            CompletedLesson::create([
+                'lesson_id' => $lesson_id,
+                'user_id' => $request->user()->id,
+            ]);
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(CompletedLesson $completedLesson)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(CompletedLesson $completedLesson)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, CompletedLesson $completedLesson)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(CompletedLesson $completedLesson)
-    {
-        //
+            return response()->json([
+                "status" => "success",
+                "message" => "Lesson successfully completed"
+            ], 200);
+        } catch (ModelNotFoundException $error) {
+            return response()->json([
+                "status" => "not_found",
+                "message" => "Resource not found"
+            ], 404);
+        }
     }
 }

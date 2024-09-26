@@ -1,8 +1,10 @@
 <?php
 
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -19,11 +21,19 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
             'checkToken' => \App\Http\Middleware\CheckToken::class,
-            'isAdmin' => \App\Http\Middleware\CheckIsAdmin::class
+            'isAdmin' => \App\Http\Middleware\CheckIsAdmin::class,
+            'isUser' => \App\Http\Middleware\CheckIsUser::class
         ]);
 
         //
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->stopIgnoring(AuthenticationException::class);
+
+        $exceptions->render(function (AuthenticationException $exception, Request $request) {
+            return response()->json([
+                'status' => 'invalid_token',
+                'message' => 'Invalid or expired token'
+            ], 401);
+        });
     })->create();

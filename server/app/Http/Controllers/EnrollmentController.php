@@ -2,64 +2,48 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Course;
 use App\Models\Enrollment;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 
 class EnrollmentController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function register(Request $request, $course_slug)
     {
-        //
+        try {
+            $course = Course::where('slug', $course_slug)->firstOrFail();
+
+            $isEnrolled = Enrollment::where('user_id', $request->user()->id)->where('course_id', $course->id)->exists();
+
+            if (!$isEnrolled) {
+                Enrollment::create([
+                    "user_id" => $request->user()->id,
+                    "course_id" => $course->id
+                ]);
+            }
+
+            return response()->json([
+                "status" => "success",
+                "message" => "User registered successful"
+            ], 201);
+        } catch (ModelNotFoundException $error) {
+            return response()->json([
+                "status" => "not_found",
+                "message" => "Resource not found"
+            ], 404);
+        }
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function getProgress(Request $request)
     {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Enrollment $enrollment)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Enrollment $enrollment)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Enrollment $enrollment)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Enrollment $enrollment)
-    {
-        //
+        return response()->json([
+            "status" => "success",
+            "message" => "User progress retrived successfully",
+            "data" => [
+                "progress" => $request->user()->enrollments->pluck("course"),
+                "completed_lessons" => $request->user()->completed_lessons->pluck("lesson")
+            ]
+        ]);
     }
 }

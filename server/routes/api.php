@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CompletedLessonController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\LessonController;
+use App\Http\Controllers\OptionController;
 use App\Http\Controllers\SetController;
-use App\Models\LessonContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -15,6 +17,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/courses', [CourseController::class, 'getAll']);
     Route::get('/courses/{course_slug}', [CourseController::class, 'getDetail']);
+
+    Route::middleware('isUser')->group(function () {
+        Route::get('/users/progress', [EnrollmentController::class, 'getProgress']);
+
+        Route::post('/lessons/{lesson_id}/contents/{contents_id}/check', [OptionController::class, 'checkAnswer']);
+
+        Route::put('/lessons/{lesson_id}/completed', [CompletedLessonController::class, 'track']);
+
+        Route::post('/courses/{course_slug}/register', [EnrollmentController::class, 'register']);
+    });
 
     Route::middleware('isAdmin')->group(function () {
         Route::post('/courses', [CourseController::class, 'store']);

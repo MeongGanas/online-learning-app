@@ -2,64 +2,42 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Option;
+use App\Models\LessonContent;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 
 class OptionController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function checkAnswer(Request $request, $lesson_id, $content_id)
     {
-        //
-    }
+        try {
+            $request->validate([
+                'option_id' => 'required|exists:options,id'
+            ]);
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
+            $data = LessonContent::where("id", $content_id)->where("lesson_id", $lesson_id)->with('options')->firstOrFail();
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+            if ($data["type"] !== "quiz") {
+                return response()->json([
+                    "status" => "error",
+                    "message" => "Only for quiz content"
+                ], 400);
+            }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Option $option)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Option $option)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Option $option)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Option $option)
-    {
-        //
+            return response()->json([
+                "status" => "success",
+                "message" => "Check answer success",
+                "data" => [
+                    "question" => $data["content"],
+                    "user_answer" => $data["options"]["option_text"],
+                    "is_correct" => $data["options"]["is_correct"] === 1 ? true : false
+                ]
+            ], 200);
+        } catch (ModelNotFoundException $error) {
+            return response()->json([
+                "status" => "not_found",
+                "message" => "Resource not found"
+            ], 404);
+        }
     }
 }
